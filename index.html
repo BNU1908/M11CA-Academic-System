@@ -118,7 +118,7 @@ const state = { user:null, page:'dashboard', sub:{} };
 let DB = { guru:[], mapel:[], kelas:[], tahunPelajaran:[], settings:{tahunAktif:'',semesterAktif:'Ganjil',bobot:{uh:40,sts:30,sas:30}},
   siswa:[], jurnal:[], kehadiran:[], nilai:[], catatanWali:[], locks:[], profiles:[], auditLog:[] };
 const semesterList = ['Ganjil','Genap'];
-const JENIS_NILAI = ['UH 1','UH 2','UH 3','UH 4','UH 5','STS','SAS','Praktik','Proyek','Portofolio'];
+const JENIS_NILAI = ['Formatif 1','Formatif 2','Formatif 3','Formatif 4','Formatif 5','ASTS 1','ASTS 2','ASAS 1','ASAS 2','Praktik Ibadah'];
 
 function uid(){ return Date.now().toString(36)+Math.random().toString(36).slice(2,8); }
 function todayISO(){ return new Date().toISOString().slice(0,10); }
