@@ -416,7 +416,7 @@ function jurnalFormModal(){
     <div class="field"><label>Kegiatan Pembelajaran</label><textarea id="jKegiatan" rows="2"></textarea></div>
     <div class="field"><label>Catatan / Kendala</label><textarea id="jCatatan" rows="2"></textarea></div>
     <div class="field"><label>Tindak Lanjut</label><textarea id="jTindak" rows="2"></textarea></div>
-    <div class="row"><div class="field"><label>Foto Kegiatan 1 (wajib)</label><input type="file" accept="image/*" id="jFoto1"></div><div class="field"><label>Foto Kegiatan 2 (wajib)</label><input type="file" accept="image/*" id="jFoto2"></div></div>
+    <div class="row"><div class="field"><label>Foto Kegiatan (wajib)</label><input type="file" accept="image/*" id="jFoto1"></div></div>
     <div class="row" id="jPreviewRow"></div>
     <div class="row" style="justify-content:flex-end;margin-top:10px">
       <button class="btn btn-ghost" id="btnCancelJurnal">Batal</button>
@@ -426,7 +426,7 @@ function jurnalFormModal(){
   </div></div>`;
 }
 async function jurnalViewModal(j){
-  const [u1,u2] = await Promise.all([signedUrl(j.foto1_path), signedUrl(j.foto2_path)]);
+  const u1 = await signedUrl(j.foto1_path);
   document.body.insertAdjacentHTML('beforeend', `<div class="modal-bg" id="jurnalViewBg"><div class="modal">
     <h3>Detail Jurnal Mengajar</h3>
     <table><tbody>
@@ -436,7 +436,7 @@ async function jurnalViewModal(j){
       <tr><td>Kegiatan</td><td>${j.kegiatan||'-'}</td></tr><tr><td>Catatan</td><td>${j.catatan||'-'}</td></tr>
       <tr><td>Tindak Lanjut</td><td>${j.tindak_lanjut||'-'}</td></tr>
     </tbody></table>
-    <div class="row" style="margin-top:10px">${u1?`<img class="photo-thumb" src="${u1}">`:''}${u2?`<img class="photo-thumb" src="${u2}">`:''}</div>
+    <div class="row" style="margin-top:10px">${u1?`<img class="photo-thumb" src="${u1}">`:''}</div>
     <div class="row no-print" style="justify-content:flex-end;margin-top:14px"><button class="btn btn-outline" id="btnPrintJurnal">🖨 Cetak PDF</button><button class="btn btn-ghost" id="btnCloseJurnalView">Tutup</button></div>
   </div></div>`);
   document.getElementById('btnCloseJurnalView').addEventListener('click', ()=>document.getElementById('jurnalViewBg').remove());
@@ -877,25 +877,22 @@ function bindSiswaModal(){
 
 function bindJurnalModal(){
   const $=(id)=>document.getElementById(id);
-  let foto1File=null, foto2File=null;
-  $('jFoto1').addEventListener('change', (e)=>{ foto1File=e.target.files[0]||null; updatePrev(); });
-  $('jFoto2').addEventListener('change', (e)=>{ foto2File=e.target.files[0]||null; updatePrev(); });
-  function updatePrev(){
-    $('jPreviewRow').innerHTML =
-      (foto1File? `<img class="photo-thumb" src="${URL.createObjectURL(foto1File)}">`:'') +
-      (foto2File? `<img class="photo-thumb" src="${URL.createObjectURL(foto2File)}">`:'');
+  let foto1File=null;
+$('jFoto1').addEventListener('change', (e)=>{ foto1File=e.target.files[0]||null; updatePrev(); });
+function updatePrev(){
+  $('jPreviewRow').innerHTML = (foto1File? `<img class="photo-thumb" src="${URL.createObjectURL(foto1File)}">`:'');
+}
   }
   $('btnCancelJurnal').addEventListener('click', ()=>$('jurnalModalBg').remove());
   async function collectAndSave(status, requirePhotos){
     if(!$('jMateri').value.trim()) return toast('Materi pembelajaran wajib diisi','err');
-    if(requirePhotos && (!foto1File||!foto2File)) return toast('Foto kegiatan wajib diunggah','err');
+   if(requirePhotos && !foto1File) return toast('Foto kegiatan wajib diunggah','err');
     const btns=['btnSaveDraftJurnal','btnKirimJurnal']; btns.forEach(b=>{ if($(b)) $(b).disabled=true; });
-    let foto1_path=null, foto2_path=null;
+    let foto1_path=null;
     if(foto1File) foto1_path = await uploadFoto(foto1File);
-    if(foto2File) foto2_path = await uploadFoto(foto2File);
     const tanggal=$('jTanggal').value;
     const payload={ guru_id:state.user.id, guru_nama:state.user.nama, tanggal, hari:hariDariTanggal(tanggal), mapel:$('jMapel').value, kelas:$('jKelas').value, jam:$('jJam').value,
-      materi:$('jMateri').value, tujuan:$('jTujuan').value, kegiatan:$('jKegiatan').value, catatan:$('jCatatan').value, tindak_lanjut:$('jTindak').value, foto1_path, foto2_path, status };
+     materi:$('jMateri').value, tujuan:$('jTujuan').value, kegiatan:$('jKegiatan').value, catatan:$('jCatatan').value, tindak_lanjut:$('jTindak').value, foto1_path, foto2_path:null, status };
     const {data,error}=await sb.from('jurnal').insert(payload).select().single();
     btns.forEach(b=>{ if($(b)) $(b).disabled=false; });
     if(error) return toast('Gagal menyimpan jurnal: '+error.message,'err');
