@@ -882,7 +882,6 @@ $('jFoto1').addEventListener('change', (e)=>{ foto1File=e.target.files[0]||null;
 function updatePrev(){
   $('jPreviewRow').innerHTML = (foto1File? `<img class="photo-thumb" src="${URL.createObjectURL(foto1File)}">`:'');
 }
-  }
   $('btnCancelJurnal').addEventListener('click', ()=>$('jurnalModalBg').remove());
   async function collectAndSave(status, requirePhotos){
     if(!$('jMateri').value.trim()) return toast('Materi pembelajaran wajib diisi','err');
