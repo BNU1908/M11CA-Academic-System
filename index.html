@@ -400,28 +400,30 @@ function pageJurnal(){
   const isGuru = state.user.role==='guru';
   const list = isGuru? DB.jurnal.filter(j=>j.guru_id===state.user.id) : DB.jurnal;
   return `${isGuru?`<div class="card"><button class="btn btn-primary" id="btnNewJurnal">+ Isi Jurnal Baru</button></div>`:''}
-  <div class="card" style="overflow:auto"><table><thead><tr><th>Tanggal</th><th>Guru</th><th>Kelas</th><th>Mapel</th><th>Jam</th><th>Materi</th><th>Status</th><th style="width:150px">Aksi</th></tr></thead>
+  <div class="card" style="overflow:auto"><table><thead><tr><th>Tanggal</th><th>Guru</th><th>Kelas</th><th>Mapel</th><th>Jam</th><th>Materi</th><th>Status</th><th style="width:190px">Aksi</th></tr></thead>
   <tbody>${list.map(j=>`<tr><td>${fmtTgl(j.tanggal)}<br><small style="color:var(--slate)">${j.hari}</small></td><td>${j.guru_nama}</td><td>${j.kelas}</td><td>${j.mapel}</td><td>${j.jam}</td><td>${j.materi}</td>
     <td>${j.status==='Terkirim'?'<span class="badge badge-ok">Terkirim</span>':'<span class="badge badge-warn">Draft</span>'}</td>
-    <td><button class="btn btn-sm btn-outline" data-view-jurnal="${j.id}">Lihat</button>${(isGuru&&j.guru_id===state.user.id)?`<button class="btn btn-sm btn-danger" data-del-jurnal="${j.id}">Hapus</button>`:''}</td></tr>`).join('')||`<tr><td colspan="8" class="empty"><div class="big">📓</div>Belum ada jurnal mengajar</td></tr>`}</tbody></table></div>`;
+    <td><button class="btn btn-sm btn-outline" data-view-jurnal="${j.id}">Lihat</button> ${((isGuru&&j.guru_id===state.user.id)||state.user.role==='admin')?`<button class="btn btn-sm btn-gold" data-edit-jurnal="${j.id}">Edit</button>`:''} ${(isGuru&&j.guru_id===state.user.id)?`<button class="btn btn-sm btn-danger" data-del-jurnal="${j.id}">Hapus</button>`:''}</td></tr>`).join('')||`<tr><td colspan="8" class="empty"><div class="big">📓</div>Belum ada jurnal mengajar</td></tr>`}</tbody></table></div>`;
 }
-function jurnalFormModal(){
-  return `<div class="modal-bg" id="jurnalModalBg"><div class="modal"><h3>Jurnal Mengajar</h3>
-    <div class="row"><div class="field"><label>Guru</label><input value="${state.user.nama}" disabled></div><div class="field"><label>Tanggal</label><input type="date" id="jTanggal" value="${todayISO()}"></div></div>
-    <div class="row"><div class="field"><label>Mata Pelajaran</label><select id="jMapel">${DB.mapel.map(m=>`<option>${m}</option>`).join('')}</select></div>
-    <div class="field"><label>Kelas</label><select id="jKelas">${DB.kelas.map(k=>`<option>${k}</option>`).join('')}</select></div>
-    <div class="field"><label>Jam Pelajaran</label><select id="jJam">${[1,2,3,4,5,6,7,8,9,10,11].map(n=>`<option>Jam ke-${n}</option>`).join('')}</select></div>
-    <div class="field"><label>Materi Pembelajaran</label><input id="jMateri"></div>
-    <div class="field"><label>Tujuan Pembelajaran</label><textarea id="jTujuan" rows="2"></textarea></div>
-    <div class="field"><label>Kegiatan Pembelajaran</label><textarea id="jKegiatan" rows="2"></textarea></div>
-    <div class="field"><label>Catatan / Kendala</label><textarea id="jCatatan" rows="2"></textarea></div>
-    <div class="field"><label>Tindak Lanjut</label><textarea id="jTindak" rows="2"></textarea></div>
-    <div class="row"><div class="field"><label>Foto Kegiatan (wajib)</label><input type="file" accept="image/*" id="jFoto1"></div></div>
+function jurnalFormModal(j){
+  j = j || {};
+  const isEdit = !!j.id;
+  return `<div class="modal-bg" id="jurnalModalBg"><div class="modal"><h3>${isEdit?'Edit Jurnal Mengajar':'Jurnal Mengajar'}</h3>
+    <div class="row"><div class="field"><label>Guru</label><input value="${j.guru_nama||state.user.nama}" disabled></div><div class="field"><label>Tanggal</label><input type="date" id="jTanggal" value="${j.tanggal||todayISO()}"></div></div>
+    <div class="row"><div class="field"><label>Mata Pelajaran</label><select id="jMapel">${DB.mapel.map(m=>`<option ${j.mapel===m?'selected':''}>${m}</option>`).join('')}</select></div>
+    <div class="field"><label>Kelas</label><select id="jKelas">${DB.kelas.map(k=>`<option ${j.kelas===k?'selected':''}>${k}</option>`).join('')}</select></div>
+    <div class="field"><label>Jam Pelajaran</label><select id="jJam">${[1,2,3,4,5,6,7,8].map(n=>`<option ${j.jam===('Jam ke-'+n)?'selected':''}>Jam ke-${n}</option>`).join('')}</select></div></div>
+    <div class="field"><label>Materi Pembelajaran</label><input id="jMateri" value="${j.materi||''}"></div>
+    <div class="field"><label>Tujuan Pembelajaran</label><textarea id="jTujuan" rows="2">${j.tujuan||''}</textarea></div>
+    <div class="field"><label>Kegiatan Pembelajaran</label><textarea id="jKegiatan" rows="2">${j.kegiatan||''}</textarea></div>
+    <div class="field"><label>Catatan / Kendala</label><textarea id="jCatatan" rows="2">${j.catatan||''}</textarea></div>
+    <div class="field"><label>Tindak Lanjut</label><textarea id="jTindak" rows="2">${j.tindak_lanjut||''}</textarea></div>
+    <div class="row"><div class="field"><label>Foto Kegiatan ${isEdit?'(opsional — kosongkan jika tidak ingin mengganti foto lama)':'(wajib)'}</label><input type="file" accept="image/*" id="jFoto1"></div></div>
     <div class="row" id="jPreviewRow"></div>
     <div class="row" style="justify-content:flex-end;margin-top:10px">
       <button class="btn btn-ghost" id="btnCancelJurnal">Batal</button>
-      <button class="btn btn-outline" id="btnSaveDraftJurnal">Simpan Draft</button>
-      <button class="btn btn-primary" id="btnKirimJurnal">Kirim Jurnal</button>
+      ${isEdit?'':'<button class="btn btn-outline" id="btnSaveDraftJurnal">Simpan Draft</button>'}
+      <button class="btn btn-primary" id="btnKirimJurnal">${isEdit?'Simpan Perubahan':'Kirim Jurnal'}</button>
     </div>
   </div></div>`;
 }
@@ -740,6 +742,11 @@ function bindPageEvents(){
 
   on('btnNewJurnal','click', ()=>{ document.body.insertAdjacentHTML('beforeend', jurnalFormModal()); bindJurnalModal(); });
   onAll('[data-view-jurnal]','click', (e)=>{ jurnalViewModal(DB.jurnal.find(x=>x.id===e.target.getAttribute('data-view-jurnal'))); });
+onAll('[data-edit-jurnal]','click', (e)=>{
+  const j = DB.jurnal.find(x=>x.id===e.target.getAttribute('data-edit-jurnal'));
+  document.body.insertAdjacentHTML('beforeend', jurnalFormModal(j));
+  bindJurnalModal(j);
+});
   onAll('[data-del-jurnal]','click', async (e)=>{
     if(!confirm('Hapus jurnal ini?')) return;
     const id=e.target.getAttribute('data-del-jurnal');
@@ -875,35 +882,41 @@ function bindSiswaModal(){
   });
 }
 
-function bindJurnalModal(){
+function bindJurnalModal(j){
+  j = j || {};
+  const isEdit = !!j.id;
   const $=(id)=>document.getElementById(id);
   let foto1File=null;
-$('jFoto1').addEventListener('change', (e)=>{ foto1File=e.target.files[0]||null; updatePrev(); });
-function updatePrev(){
-  $('jPreviewRow').innerHTML = (foto1File? `<img class="photo-thumb" src="${URL.createObjectURL(foto1File)}">`:'');
-}
+  $('jFoto1').addEventListener('change', (e)=>{ foto1File=e.target.files[0]||null; updatePrev(); });
+  function updatePrev(){
+    $('jPreviewRow').innerHTML = (foto1File? `<img class="photo-thumb" src="${URL.createObjectURL(foto1File)}">`:'');
+  }
   $('btnCancelJurnal').addEventListener('click', ()=>$('jurnalModalBg').remove());
   async function collectAndSave(status, requirePhotos){
     if(!$('jMateri').value.trim()) return toast('Materi pembelajaran wajib diisi','err');
-   if(requirePhotos && !foto1File) return toast('Foto kegiatan wajib diunggah','err');
+    if(requirePhotos && !foto1File && !j.foto1_path) return toast('Foto kegiatan wajib diunggah','err');
     const btns=['btnSaveDraftJurnal','btnKirimJurnal']; btns.forEach(b=>{ if($(b)) $(b).disabled=true; });
-    let foto1_path=null;
+    let foto1_path = j.foto1_path || null;
     if(foto1File) foto1_path = await uploadFoto(foto1File);
     const tanggal=$('jTanggal').value;
-    const payload={ guru_id:state.user.id, guru_nama:state.user.nama, tanggal, hari:hariDariTanggal(tanggal), mapel:$('jMapel').value, kelas:$('jKelas').value, jam:$('jJam').value,
-     materi:$('jMateri').value, tujuan:$('jTujuan').value, kegiatan:$('jKegiatan').value, catatan:$('jCatatan').value, tindak_lanjut:$('jTindak').value, foto1_path, foto2_path:null, status };
-    const {data,error}=await sb.from('jurnal').insert(payload).select().single();
+    const payload={ guru_id: j.guru_id||state.user.id, guru_nama: j.guru_nama||state.user.nama, tanggal, hari:hariDariTanggal(tanggal), mapel:$('jMapel').value, kelas:$('jKelas').value, jam:$('jJam').value,
+      materi:$('jMateri').value, tujuan:$('jTujuan').value, kegiatan:$('jKegiatan').value, catatan:$('jCatatan').value, tindak_lanjut:$('jTindak').value, foto1_path, foto2_path:null, status };
+    let data, error;
+    if(isEdit){ ({data,error} = await sb.from('jurnal').update(payload).eq('id', j.id).select().single()); }
+    else { ({data,error} = await sb.from('jurnal').insert(payload).select().single()); }
     btns.forEach(b=>{ if($(b)) $(b).disabled=false; });
     if(error) return toast('Gagal menyimpan jurnal: '+error.message,'err');
-    DB.jurnal.unshift(data);
-    if(status==='Terkirim') logAudit('Kirim Jurnal', $('jMapel').value+' / '+$('jKelas').value);
-    toast(status==='Terkirim'? 'Jurnal berhasil dikirim' : 'Draft jurnal disimpan');
+    if(isEdit){ const idx=DB.jurnal.findIndex(x=>x.id===j.id); if(idx>-1) DB.jurnal[idx]=data; logAudit('Edit Jurnal', $('jMapel').value+' / '+$('jKelas').value); }
+    else { DB.jurnal.unshift(data); if(status==='Terkirim') logAudit('Kirim Jurnal', $('jMapel').value+' / '+$('jKelas').value); }
+    toast(isEdit? 'Perubahan jurnal disimpan' : (status==='Terkirim'? 'Jurnal berhasil dikirim' : 'Draft jurnal disimpan'));
     $('jurnalModalBg').remove(); renderContent();
   }
-  $('btnSaveDraftJurnal').addEventListener('click', ()=>collectAndSave('Draft', false));
-  $('btnKirimJurnal').addEventListener('click', ()=>collectAndSave('Terkirim', true));
+  if(isEdit){ $('btnKirimJurnal').addEventListener('click', ()=>collectAndSave(j.status||'Terkirim', false)); }
+  else {
+    $('btnSaveDraftJurnal').addEventListener('click', ()=>collectAndSave('Draft', false));
+    $('btnKirimJurnal').addEventListener('click', ()=>collectAndSave('Terkirim', true));
+  }
 }
-
 /* ---------------- INIT ---------------- */
 (async function init(){
   if(CONFIG_MISSING){ render(); return; }
